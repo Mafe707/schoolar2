@@ -1,3 +1,11 @@
+<?php
+session_start();
+include('../config/database.php');
+if (!isset($_SESSION['user_id'])) {
+    header('Location: http://localhost/schoolar2/src/login.html');
+    exit();
+}
+?>
 <!DOCTYPE html>
 <html lang="en">
 
@@ -10,7 +18,6 @@
     <meta name="author" content="">
 
     <title>SB Admin 2 - Dashboard</title>
-
     <!-- Custom fonts for this template-->
     <link href="vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
     <link
@@ -31,7 +38,7 @@
         <ul class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion" id="accordionSidebar">
 
             <!-- Sidebar - Brand -->
-            <a class="sidebar-brand d-flex align-items-center justify-content-center" href="index.html">
+            <a class="sidebar-brand d-flex align-items-center justify-content-center" href="index.php">
                 <div class="sidebar-brand-icon rotate-n-15">
                     <i class="fas fa-laugh-wink"></i>
                 </div>
@@ -43,11 +50,17 @@
 
             <!-- Nav Item - Dashboard -->
             <li class="nav-item active">
-                <a class="nav-link" href="index.html">
+                <a class="nav-link" href="index.php">
                     <i class="fas fa-fw fa-tachometer-alt"></i>
                     <span>Dashboard</span></a>
             </li>
-
+<!-- Nav Item - List user -->
+            <li class="nav-item">
+                <a class="nav-link" href="index.php?section=list_users">
+                    <i class="fas fa-fw fa-users"></i>
+                    <span>List user</span>
+                </a>
+            </li>
             <!-- Divider -->
             <hr class="sidebar-divider">
 
@@ -330,9 +343,17 @@
                         <li class="nav-item dropdown no-arrow">
                             <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button"
                                 data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                <span class="mr-2 d-none d-lg-inline text-gray-600 small">Douglas McGee</span>
+                                <span class="mr-2 d-none d-lg-inline text-gray-600 small">
+                                    <?php
+                                    if (isset($_SESSION['firstname']) && isset($_SESSION['lastname'])) {
+                                        echo htmlspecialchars($_SESSION['firstname']) . ' ' . htmlspecialchars($_SESSION['lastname']);
+                                    } else {
+                                        echo 'Usuario';
+                                    }
+                                    ?>
+                                </span>
                                 <img class="img-profile rounded-circle"
-                                    src="img/undraw_profile.svg">
+                                    src="<?php echo isset($_SESSION['photo']) ? htmlspecialchars($_SESSION['photo']) : 'img/default.png'; ?>">
                             </a>
                             <!-- Dropdown - User Information -->
                             <div class="dropdown-menu dropdown-menu-right shadow animated--grow-in"
@@ -356,7 +377,6 @@
                                 </a>
                             </div>
                         </li>
-
                     </ul>
 
                 </nav>
@@ -371,7 +391,53 @@
                         <a href="#" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm"><i
                                 class="fas fa-download fa-sm text-white-50"></i> Generate Report</a>
                     </div>
-
+                    <?php if (isset($_GET['section']) && $_GET['section'] == 'list_users'): ?>
+                        <div class="card shadow mb-4">
+                            <div class="card-header py-3">
+                                <h6 class="m-0 font-weight-bold text-primary">Listado de Usuarios</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-bordered" width="100%" cellspacing="0">
+                                        <thead>
+                                            <tr>
+                                                <th>Firstname</th>
+                                                <th>Lastname</th>
+                                                <th>E-mail</th>
+                                                <th>Status</th>
+                                                <th>Photo</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <?php
+                                            $sql = "SELECT id, firstname, lastname, email, CASE WHEN status = true THEN 'Active' ELSE 'no active' END AS status FROM users";
+                                            $res = pg_query($conn, $sql);
+                                            if (!$res) {
+                                                echo '<tr><td colspan="6">Query error</td></tr>';
+                                            } else {
+                                                while ($row = pg_fetch_assoc($res)) {
+                                                    echo '<tr>';
+                                                    echo '<td>' . htmlspecialchars($row['firstname']) . '</td>';
+                                                    echo '<td>' . htmlspecialchars($row['lastname']) . '</td>';
+                                                    echo '<td>' . htmlspecialchars($row['email']) . '</td>';
+                                                    echo '<td>' . htmlspecialchars($row['status']) . '</td>';
+                                                    echo '<td align="center"><img src="img/default.png" width="20"></td>';
+                                                    echo '<td>';
+                                                    echo '<a href="#"><img src="img/edit.png" width="15"></a> ';
+                                                    echo '<a href="#"><img src="img/lupa.png" width="15"></a> ';
+                                                    echo '<a href="http://127.0.0.1/schoolar/src/delete.php"><img src="img/dash.png" width="15"></a>';
+                                                    echo '</td>';
+                                                    echo '</tr>';
+                                                }
+                                            }
+                                            ?>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    <?php endif; ?>
                     <!-- Content Row -->
                     <div class="row">
 
